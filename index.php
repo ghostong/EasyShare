@@ -9,6 +9,7 @@
  * upload_max_filesize = 500M
  * */
 
+error_reporting( E_ERROR );
 ini_set ('memory_limit','500M');
 ini_set ('max_execution_time',0);
 
