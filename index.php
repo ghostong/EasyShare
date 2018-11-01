@@ -16,6 +16,7 @@ ini_set ('max_execution_time',0);
 define ( 'DATA_DIR', '/tmp' );
 define ( 'DB_FILE', DATA_DIR.'/Easy.db' );
 define ( 'FILE_DIR', DATA_DIR.'/file' );
+define ( 'GD_EXISTS', extension_loaded('gd') );
 
 $Action = $_GET['action'] ? $_GET['action'] : 'index';
 
@@ -29,6 +30,9 @@ switch ( $Action ) {
     case 'delete' :
         Delete($_GET['id']);
         break;
+    case 'qrcode' :
+        QRcode(base64_decode($_GET['txt']));
+        break;
     case 'init' :
         Init ();
         break;
@@ -40,11 +44,14 @@ switch ( $Action ) {
 
 
 function PageIndex () {
+    $LogoUrl =  QRUrl(SelfUrl());
     $FileList = EasyKvReadAll();
     $ListStr = '';
     foreach ( $FileList as $k => $v ) {
+        $Url = "/index.php?action=download&id={$k}";
+        $UrlQr = QRUrl(SelfUrl().$Url);
         $date = date('Y-m-d H:i:s', $v['time']);
-        $ListStr .= "<li>[$date] {$v['Name']} &nbsp;&nbsp;[&nbsp;<a href='/index.php?action=download&id={$k}'>下载</a>&nbsp;/&nbsp;<a href='/index.php?action=delete&id={$k}'>删除</a>&nbsp;]</li>";
+        $ListStr .= "<li>[$date] {$v['Name']} &nbsp;&nbsp;[&nbsp;<a href='{$UrlQr}'>二维码</a>&nbsp;/&nbsp;<a href='{$Url}'>下载</a>&nbsp;/&nbsp;<a href='/index.php?action=delete&id={$k}'>删除</a>&nbsp;]</li>";
     }
     if (!$ListStr && !is_dir(FILE_DIR)) {
         $ListStr = '<li><a href="/index.php?action=init">初始化存储目录</a></li>';
@@ -71,11 +78,23 @@ function PageIndex () {
             a:link , a:visited , a:hover , a:active {color: #111111}
             a{text-decoration:none}
             .spadding {
-                padding:20px;
+                padding:5px 20px 0px 20px;
+            }
+            .floatleft {
+                float:left;
             }
         </style>
     </head>
     <body>
+        <div class="spadding" style="height:100px">
+            <div class="floatleft">
+                <img src="{$LogoUrl}" style="height:80px;"/>
+            </div>
+            <div class="floatleft" style="font-size:60px;">
+                &nbsp; EasyShare
+            </div>
+        </div>
+        <hr/>
         <div class="spadding">
             <ul>
                 $ListStr
@@ -164,6 +183,20 @@ function Init () {
     PageTips('/',2,'初始化完成');   
 }
 
+function QRUrl ($Txt) {
+    return SelfUrl()."/index.php?action=qrcode&txt=".base64_encode($Txt);
+}
+
+function QRcode($Txt) {
+    if (GD_EXISTS) {
+        include('./phpqrcode.php');
+        QRcode::png ($Txt,false,QR_ECLEVEL_L,5,1);
+    }else{
+        header('Content-type: image/png');
+        echo file_get_contents('./gdinstall.png');
+    }
+}
+
 function MvFile ( $FileInfo ) {
     if ( is_uploaded_file ( $FileInfo['tmp_name'] ) ) {
         $PathInfo = pathinfo($FileInfo['name']);
@@ -179,6 +212,10 @@ function MvFile ( $FileInfo ) {
         PageTips('/',2,'文件上传失败');
     }
 
+}
+
+function SelfUrl () {
+    return ( strtolower( current( explode('/',$_SERVER['SERVER_PROTOCOL']) ) ).'://'.$_SERVER['HTTP_HOST'] );
 }
 
 function EasyKvDB ( $k, $v , $Action = '' ) {
