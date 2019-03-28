@@ -63,7 +63,8 @@ function PageIndex () {
             $OutStr = htmlentities ( $v['str'] );
             #$OutStr = str_replace (array("\r\n","\n\r","\n","\r"),"<br/>",$OutStr);
             #$OutStr = str_replace (array(" "),"&nbsp;",$OutStr);
-            $ListStr2 .= "<tr><td><textarea style='width:500px;height:300px;'>{$OutStr}</textarea><td></tr>";
+            $ListStr2 .= $OutStr;
+//            $ListStr2 .= ;
         }
     }
     if (!$ListStr && !is_dir(FILE_DIR)) {
@@ -117,10 +118,14 @@ function PageIndex () {
                         $ListStr
                     </table>
                 </td>
-                <td style="border-left: 1px solid" class="spadding">
-                    <table>
-                        $ListStr2
-                    </table>
+                <td style="border-left: 1px solid" class="spadding" rowspan="2">
+                    <form enctype="multipart/form-data" method="POST" action="/index.php?action=upload">
+                        <table>
+                            <tr><td><textarea style='width:500px;height:300px;' name='str'>{$ListStr2}</textarea><td></tr>
+                        </table>
+                        <input type="submit" value="保存" style="margin-left:50px;margin-top:10px;"/>
+                    </form>
+
                 </td>
             </tr>
             <tr>
@@ -132,13 +137,7 @@ function PageIndex () {
                         </form>
                     </div>
                 </td>
-                <td style="border-left: 1px solid" class="spadding">
-                    <div class="spadding">
-                        <form enctype="multipart/form-data" method="POST" action="/index.php?action=upload">
-                            <textarea name="str" style="float:left;height:50px;width:300px;"></textarea> <input type="submit" value="提交" style="margin-left:50px;margin-top:10px;"/>
-                        </form>
-                    </div>
-                </td>
+ 
             </tr>
         </table>
         <hr/>
