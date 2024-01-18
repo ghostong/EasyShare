@@ -9,62 +9,59 @@
  * upload_max_filesize = 500M
  * */
 
-error_reporting( E_ERROR );
-ini_set ('memory_limit','500M');
-ini_set ('max_execution_time',0);
+error_reporting(E_ERROR);
+ini_set('memory_limit', '500M');
+ini_set('max_execution_time', 0);
 
-define ( 'DATA_DIR', '/tmp' );
-define ( 'DB_FILE', DATA_DIR.'/Easy.db' );
-define ( 'FILE_DIR', DATA_DIR.'/file' );
-define ( 'GD_EXISTS', extension_loaded('gd') );
+const DATA_DIR = '/tmp';
+const DB_FILE = DATA_DIR . '/Easy.db';
+const FILE_DIR = DATA_DIR . '/file';
+define('GD_EXISTS', extension_loaded('gd'));
 
 $Action = $_GET['action'] ? $_GET['action'] : 'index';
 
-switch ( $Action ) {
-    case 'download' : 
-        DownLoad ($_GET['id']) ;
+switch ($Action) {
+    case 'download' :
+        downLoad($_GET['id']);
         break;
     case 'upload' :
-        if ( $_FILES["uploadfile"] ) {
-            MvFile ($_FILES["uploadfile"]);
-        }else{
-            InsertStr();
+        if ($_FILES["uploadfile"]) {
+            mvFile($_FILES["uploadfile"]);
+        } else {
+            insertStr();
         }
         break;
     case 'delete' :
-        Delete($_GET['id']);
+        delete($_GET['id']);
         break;
     case 'qrcode' :
-        QRcode(base64_decode($_GET['txt']));
+        qrCode(base64_decode($_GET['txt']));
         break;
     case 'init' :
-        Init ();
+        init();
         break;
     default :
-        PageIndex ();
+        pageIndex();
         break;
 }
 
 
-
-function PageIndex () {
-    $LogoUrl =  QRUrl(SelfUrl());
-    $FileList = EasyKvReadAll();
+function pageIndex() {
+    $LogoUrl = qrUrl(selfUrl());
+    $FileList = easyKvReadAll();
     $ListStr = '';
     $ListStr2 = '';
-    foreach ( $FileList as $k => $v ) {
-        if($v['type'] == 'f') {
+    foreach ($FileList as $k => $v) {
+        if ($v['type'] == 'f') {
             $Url = "/index.php?action=download&id={$k}";
-            $UrlQr = QRUrl(SelfUrl().$Url);
+            $UrlQr = qrUrl(selfUrl() . $Url);
             $date = date('m-d H:i', $v['time']);
-            $ShortName = mb_substr($v['Name'],0,20,'utf8');
-            $ListStr .= "<tr><td>[$date]</td><td><a href='{$Url}' title='点击下载({$v['Name']})'>{$ShortName}</a></td><td>&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<a href='{$UrlQr}' target='_blank' title='通过二维码下载({$v['Name']})'>二维码</a>&nbsp;/&nbsp;<a href='/index.php?action=delete&id={$k}' title='删除({$v['Name']})'>删除</a>&nbsp;]<td></tr>";
-        }elseif($v['type'] == 's'){
-            $OutStr = htmlentities ( $v['str'] );
-            #$OutStr = str_replace (array("\r\n","\n\r","\n","\r"),"<br/>",$OutStr);
-            #$OutStr = str_replace (array(" "),"&nbsp;",$OutStr);
+            $ShortName = mb_substr($v['name'], 0, 20, 'utf8');
+            $fileSize = round($v['size'] / 10247 / 1024, 4) . "M";
+            $ListStr .= "<tr><td>[$date]</td><td><a href='{$Url}' title='点击下载({$v['name']})'>{$ShortName}</a></td><td>&nbsp;&nbsp;&nbsp;&nbsp;{$fileSize}&nbsp;[&nbsp;<a href='{$UrlQr}' target='_blank' title='通过二维码下载({$v['name']})'>二维码</a>&nbsp;/&nbsp;<a href='/index.php?action=delete&id={$k}' title='删除({$v['name']})'>删除</a>&nbsp;]<td></tr>";
+        } elseif ($v['type'] == 's') {
+            $OutStr = htmlentities($v['str']);
             $ListStr2 .= $OutStr;
-//            $ListStr2 .= ;
         }
     }
     if (!$ListStr && !is_dir(FILE_DIR)) {
@@ -147,7 +144,7 @@ POUT;
 
 }
 
-function PageTips ( $Url='/', $Time=2, $Tips = '操作成功' ) {
+function pageTips($Url = '/', $Time = 2, $Tips = '操作成功') {
     echo <<<POUT
 <html>
     <head>
@@ -188,116 +185,113 @@ POUT;
 
 }
 
-function DownLoad ($id) {
-    $info = EasyKvGet ($id) ;
-    $DownLoadFile = FILE_DIR.'/'.$info['SaveName'];
-    if ( $info && file_exists( $DownLoadFile ) ) {
+function downLoad($id) {
+    $info = easyKvGet($id);
+    $DownLoadFile = FILE_DIR . '/' . $info['save_name'];
+    if ($info && file_exists($DownLoadFile)) {
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="'.$info['Name'].'"');
+        header('Content-Disposition: attachment; filename="' . $info['name'] . '"');
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
-        header('Content-Length: ' . $info['Size'] );
+        header('Content-Length: ' . $info['size']);
         readfile($DownLoadFile);
         exit;
-    }else{
-        PageTips('/',2,'下载失败,文件不存在');   
+    } else {
+        pageTips('/', 2, '下载失败,文件不存在');
     }
 }
 
-function Delete ( $id ) {
-    $Data = EasyKvGet($id) ;
-    EasyKvDel($id);
-    unlink(FILE_DIR.'/'.$Data['SaveName']);
-    PageTips('/',2,$Data['Name'].'删除成功');   
+function delete($id) {
+    $Data = easyKvGet($id);
+    easyKvDel($id);
+    unlink(FILE_DIR . '/' . $Data['save_name']);
+    pageTips('/', 2, $Data['name'] . '删除成功');
 }
 
-function Init () {
-    mkdir ( DATA_DIR );
-    mkdir ( FILE_DIR );
-    PageTips('/',2,'初始化完成');   
+function init() {
+    mkdir(DATA_DIR);
+    mkdir(FILE_DIR);
+    pageTips('/', 2, '初始化完成');
 }
 
-function QRUrl ($Txt) {
-    return SelfUrl()."/index.php?action=qrcode&txt=".base64_encode($Txt);
+function qrUrl($Txt) {
+    return selfUrl() . "/index.php?action=qrcode&txt=" . base64_encode($Txt);
 }
 
-function QRcode($Txt) {
+function qrCode($Txt) {
     if (GD_EXISTS) {
         include('./phpqrcode.php');
-        QRcode::png ($Txt,false,QR_ECLEVEL_L,5,1);
-    }else{
+        QRcode::png($Txt, false, QR_ECLEVEL_L, 5, 1);
+    } else {
         header('Content-type: image/png');
         echo file_get_contents('./gdinstall.png');
     }
 }
 
-function MvFile ( $FileInfo ) {
-    if ( is_uploaded_file ( $FileInfo['tmp_name'] ) ) {
+function mvFile($FileInfo) {
+    if (is_uploaded_file($FileInfo['tmp_name'])) {
         $PathInfo = pathinfo($FileInfo['name']);
         $FileId = md5($FileInfo['name']);
-        $FileName = $FileId.'.'.$PathInfo['extension'];
-        if ( move_uploaded_file ( $FileInfo['tmp_name'] ,FILE_DIR.'/'.$FileName) ) {
-            EasyKvSet($FileId,array('Name'=>$FileInfo['name'],'Size'=>$FileInfo['size'],'SaveName'=>$FileName,'time'=>time(),'type'=>'f'));
-            PageTips('/',2,'文件上传成功');
+        $FileName = $FileId . '.' . $PathInfo['extension'];
+        if (move_uploaded_file($FileInfo['tmp_name'], FILE_DIR . '/' . $FileName)) {
+            easyKvSet($FileId, array('name' => $FileInfo['name'], 'size' => $FileInfo['size'], 'save_name' => $FileName, 'time' => time(), 'type' => 'f'));
+            pageTips('/', 2, '文件上传成功');
         } else {
-            PageTips('/',2,'文件上传失败');
+            pageTips('/', 2, '文件上传失败');
         }
     } else {
-        PageTips('/',2,'文件上传失败');
+        pageTips('/', 2, '文件上传失败');
     }
 
 }
 
-function InsertStr () {
-    $Str = $_POST['str'] ;
-    if ( $Str ) {
+function insertStr() {
+    $Str = $_POST['str'];
+    if ($Str) {
         $Key = md5('TextArea');
-        EasyKvSet($Key,array('str'=>$Str,'time'=>time(),'type'=>'s'));
-        PageTips('/',2,'提交成功');
-    }else{
-        PageTips('/',2,'提交失败');
+        easyKvSet($Key, array('str' => $Str, 'time' => time(), 'type' => 's'));
+        pageTips('/', 2, '提交成功');
+    } else {
+        pageTips('/', 2, '提交失败');
     }
 }
 
-function SelfUrl () {
-    return ( strtolower( current( explode('/',$_SERVER['SERVER_PROTOCOL']) ) ).'://'.$_SERVER['HTTP_HOST'] );
+function selfUrl() {
+    return (strtolower(current(explode('/', $_SERVER['SERVER_PROTOCOL']))) . '://' . $_SERVER['HTTP_HOST']);
 }
-
 
 
 //暂不考虑并发情况
 
-function EasyKvSet ( $k, $v ) {
-    $Arr=EasyKvOpen();
+function easyKvSet($k, $v) {
+    $Arr = easyKvOpen();
     $Arr[$k] = $v;
-    return EasyKvWrite( $Arr );
+    return EasyKvWrite($Arr);
 }
 
-function EasyKvReadAll () {
-    $Arr=EasyKvOpen();
-    return $Arr;
+function easyKvReadAll() {
+    return easyKvOpen();
 }
 
-function EasyKvGet ( $k ) {
-    $Arr=EasyKvOpen();
+function easyKvGet($k) {
+    $Arr = easyKvOpen();
     return $Arr[$k] ? $Arr[$k] : false;
 }
 
-function EasyKvDel ( $k ) {
-    $Arr=EasyKvOpen();
+function easyKvDel($k) {
+    $Arr = easyKvOpen();
     unset($Arr[$k]);
-    return EasyKvWrite( $Arr );
+    return EasyKvWrite($Arr);
 }
 
-function EasyKvOpen () {
-    $Str = file_get_contents( DB_FILE );
-    $Arr = unserialize($Str);
-    return $Arr;
+function easyKvOpen() {
+    $Str = file_get_contents(DB_FILE);
+    return unserialize($Str);
 }
 
-function EasyKvWrite ( $Arr ) {
+function EasyKvWrite($Arr) {
     $Str = serialize($Arr);
-    return file_put_contents ( DB_FILE , $Str );
+    return file_put_contents(DB_FILE, $Str);
 }

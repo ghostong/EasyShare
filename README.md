@@ -16,7 +16,7 @@
 ```php
     Nginx :
         client_max_body_size 500M;
-	php.ini :
-	    post_max_size = 500M
-		upload_max_filesize = 500M
+    php.ini :
+        post_max_size = 500M
+        upload_max_filesize = 500M
 ```

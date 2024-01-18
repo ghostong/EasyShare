@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+  easy-share:
+    image: easy-share:latest
+    platform: 'linux/x86_64'
+    ports:
+      - "8899:80"
+    build:
+      context: .
+      dockerfile: Dockerfile
