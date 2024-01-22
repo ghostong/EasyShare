@@ -57,7 +57,7 @@ function pageIndex() {
             $UrlQr = qrUrl(selfUrl() . $Url);
             $date = date('m-d H:i', $v['time']);
             $ShortName = mb_substr($v['name'], 0, 20, 'utf8');
-            $fileSize = round($v['size'] / 10247 / 1024, 4) . "M";
+            $fileSize = round($v['size'] / 1024 / 1024, 4) . "M";
             $ListStr .= "<tr><td>[$date]</td><td><a href='{$Url}' title='点击下载({$v['name']})'>{$ShortName}</a></td><td>&nbsp;&nbsp;&nbsp;&nbsp;{$fileSize}&nbsp;[&nbsp;<a href='{$UrlQr}' target='_blank' title='通过二维码下载({$v['name']})'>二维码</a>&nbsp;/&nbsp;<a href='/index.php?action=delete&id={$k}' title='删除({$v['name']})'>删除</a>&nbsp;]<td></tr>";
         } elseif ($v['type'] == 's') {
             $OutStr = htmlentities($v['str']);
